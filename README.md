@@ -1,12 +1,14 @@
 # Firebase && React
 
-## Initial Set Up
+Live blogging platform. A demonstration application for working with Firebase and Cloud Firestore. Main goal is to get very good at firebase workflow & applying all the services firebase provides.
 
-- Take a tour of the application.
-- Set up a new project in the Firebase console.
-- Take a tour of the Firebase console.
-- Go to the Database section and create a new Cloud Firestore.
-  - Put it into test mode.
+### Firebase Features to try -
+
+- Authentication.
+- Cloud Firestore.
+- storage (for storing image or other files).
+- Cloud Functions, write backend code in firebase. Like - make api end-point, when data changes i want to trigger all this other actions. very similar to `AWS`, `lamda` etc.
+- Deployment.
 
 ## Installing Firebase in Your React Application
 
@@ -16,12 +18,12 @@ Let's make a new file called `firebase.js`.
 import firebase from 'firebase/app';
 
 const config = {
-  apiKey: 'AIzaSyAudsj8rc2TsUjwUx1ISskz-FPwEYuYlCw',
-  authDomain: 'think-piece.firebaseapp.com',
-  databaseURL: 'https://think-piece.firebaseio.com',
-  projectId: 'think-piece',
-  storageBucket: 'think-piece.appspot.com',
-  messagingSenderId: '98218894562',
+  apiKey: '',
+  authDomain: '',
+  databaseURL: '',
+  projectId: '',
+  storageBucket: '',
+  messagingSenderId: '',
 };
 
 firebase.initializeApp(config);
@@ -45,19 +47,11 @@ This basic installation of firebase does _not_ include Cloud Firestore. So, let'
 import firebase from 'firebase/app';
 import 'firebase/firestore'; // NEW
 
-const config = {
-  apiKey: 'AIzaSyAudsj8rc2TsUjwUx1ISskz-FPwEYuYlCw',
-  authDomain: 'think-piece.firebaseapp.com',
-  databaseURL: 'https://think-piece.firebaseio.com',
-  projectId: 'think-piece',
-  storageBucket: 'think-piece.appspot.com',
-  messagingSenderId: '98218894562',
-};
+const config = {};
 
 firebase.initializeApp(config);
 
 export const firestore = firebase.firestore(); // NEW
-
 export default firebase;
 ```
 
