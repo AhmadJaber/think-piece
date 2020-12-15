@@ -1,18 +1,87 @@
-import React, { Component } from 'react';
+import React from 'react';
+import { useSetState } from '../hooks/useSetState';
 
-class AddPost extends Component {
-  state = { title: '', content: '' };
+const initalState = {
+  title: '',
+  content: '',
+};
 
-  handleChange = event => {
+export default function AddPost({ onCreate }) {
+  const [state, setState] = useSetState(initalState);
+  console.log(state);
+
+  const handleChange = (event) => {
     const { name, value } = event.target;
-    this.setState({ [name]: value });
+    setState({ [name]: value });
   };
 
-  handleSubmit = event => {
+  const handleSubmit = (event) => {
     event.preventDefault();
 
-    const { onCreate } = this.props;
-    const { title, content } = this.state;
+    const { content, title } = state;
+    const post = {
+      id: Date.now().toString(),
+      title,
+      content,
+      user: {
+        uid: '1111',
+        displayName: 'Steve Kinney',
+        email: 'steve@mailinator.com',
+        photoURL: 'http://placekitten.com/g/200/200',
+      },
+      favorites: 0,
+      comments: 0,
+      createdAt: new Date(),
+    };
+
+    onCreate(post);
+
+    clear();
+  };
+
+  const clear = () => {
+    setState(initalState);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className='AddPost'>
+      <input
+        type='text'
+        name='title'
+        placeholder='Title'
+        value={state.title}
+        onChange={handleChange}
+        required
+      />
+      <input
+        type='text'
+        name='content'
+        placeholder='Body'
+        value={state.content}
+        onChange={handleChange}
+        required
+      />
+      <input className='create' type='submit' value='Create Post' />
+    </form>
+  );
+}
+
+/**
+ * ? handling form state-management with useRef()
+ export default function AddPost({ onCreate }) {
+  const titleRef = useRef('');
+  const contentRef = useRef('');
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    // console.log(titleRef.current.value);
+    const title = titleRef.current.value;
+    const content = contentRef.current.value;
+
+    if (!title || !content) {
+      console.log('empty form');
+      return;
+    }
 
     const post = {
       id: Date.now().toString(),
@@ -27,35 +96,20 @@ class AddPost extends Component {
       favorites: 0,
       comments: 0,
       createdAt: new Date(),
-    }
+    };
 
     onCreate(post);
 
-    this.setState({ title: '', content: '' });
+    contentRef.current.value = '';
+    titleRef.current.value = '';
   };
 
-  render() {
-    const { title, content } = this.state;
-    return (
-      <form onSubmit={this.handleSubmit} className="AddPost">
-        <input
-          type="text"
-          name="title"
-          placeholder="Title"
-          value={title}
-          onChange={this.handleChange}
-        />
-        <input
-          type="text"
-          name="content"
-          placeholder="Body"
-          value={content}
-          onChange={this.handleChange}
-        />
-        <input className="create" type="submit" value="Create Post" />
-      </form>
-    );
-  }
+  return (
+    <form onSubmit={handleSubmit} className='AddPost'>
+      <input type='text' name='title' placeholder='Title' ref={titleRef} />
+      <input type='text' name='content' placeholder='Body' ref={contentRef} />
+      <input className='create' type='submit' value='Create Post' />
+    </form>
+  );
 }
-
-export default AddPost;
+ */
