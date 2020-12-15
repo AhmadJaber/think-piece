@@ -11,8 +11,25 @@
 
 ### Cloud Firestore's(no sql database) Data Model.
 
-- It designed for scalability. Awesome thing is, if i change my database instantly events are pushed to all connected clients.
-- Firestore is based on the idea of `collections`. There will be a top level `collection` and as many as sub-collections. To structure this thik about the user interface and i want to show the user and structure the data based on that.
+- It designed for scalability. Awesome thing is, if i change my database instantly events are pushed to all connected clients. Firestore is based on the idea of `collections`. There will be a top level `collection` and as many as sub-collections.
+- collection & document, `collection`(usually array of things) is group of objects, where the objects are called `documents`. In a created collection we create documents with unique id.
+- `Query`, is a async request we make to firesotre to give us something from database.
+- after quering, firesotre gives us two types of objects -
+  > query reference - is an object which doesn't have the actual data of the collections or documents. it gives us the information about the data or method to get the `snapshot object`.
+  > query snapshot - which gives us the data we r looking for.
+
+we use the **query-reference** object to tell the firesotre whether to get the data or save data. also **query-reference** means **document-reference** has it's parent called **collection-reference**.
+
+in **document-reference** objects we perform our firesotre `CRUD` methods,
+`set()`, `get()`, `update()`, `delete()`
+
+get() - is for retriving the data, meaning pulling out the snapshot object.
+`document-reference.get()` we get `document snapshot`
+`collection-reference.get()` we get `query snapshot`
+
+we can **add documents** to collection useing, **collection-reference** object - `add()`
+
+> To structure this collections, think about the user interface and what i want to show the user and structure the data based on that.
 
 ```js
 const db = firebase.firesotre();

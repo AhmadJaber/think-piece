@@ -27,7 +27,6 @@ const config = {
 };
 
 firebase.initializeApp(config);
-
 export default firebase;
 ```
 
@@ -55,24 +54,23 @@ export const firestore = firebase.firestore(); // NEW
 export default firebase;
 ```
 
-## Cloud Firestore
+### Cloud Firestore
 
-### Fetching Posts from Cloud Firestore
+**Fetching Posts from Cloud Firestore**
 
 Let's start by fetching posts whenenver the `Application` component mounts.
-
 First, let's pull in Cloud Firestore from our new `firebase.js` file.
 
 ```js
 import { firestore } from '../firebase';
 ```
 
-Now, we'll get all of the posts from Cloud Firestore whenenver the `Application` component mounts.
+Now, we'll get all of the posts from Cloud Firestore whenenver the `Application` component mounts. one thing to remember 95% of firestore is asynchronous & all promise based.
 
 ```js
+// to get the entire collection use get()
 componentDidMount = async () => {
   const posts = await firestore.collection('posts').get();
-
   console.log(posts);
 };
 ```
