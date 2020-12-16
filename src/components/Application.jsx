@@ -7,8 +7,14 @@ export default function Application() {
   const [posts, setPosts] = useState(initalState);
 
   useEffect(() => {
-    const data = firestore.collection('posts').get();
-    console.log(data);
+    const posts = firestore
+      .collection('posts')
+      .get()
+      .then((snapshot) => {
+        console.log(snapshot);
+      });
+
+    console.log(posts);
   }, []);
 
   const handleCreate = (post) => {
