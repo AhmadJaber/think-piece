@@ -9,7 +9,6 @@ const Post = ({ title, content, user, createdAt, stars, comments, id }) => {
     // update(), will take an object of fields, i want to update
     postRef.update({ stars: stars + 1 });
   };
-  console.log(typeof createdAt);
 
   return (
     <article className='Post'>

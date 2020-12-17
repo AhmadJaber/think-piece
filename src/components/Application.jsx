@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { firestore } from '../lib/firebase';
+import { auth, firestore } from '../lib/firebase';
 import { collectIdAndData } from '../utils/utils';
+import Authentication from './Authentication';
 import Posts from './Posts';
 
 export default function Application() {
   const [posts, setPosts] = useState([]);
+  const [user, setUser] = useState(null);
 
   /*
     * to enable, realtime update with cloud firestore
@@ -18,26 +20,43 @@ export default function Application() {
     unsubscribe.
   */
   useEffect(() => {
-    let unsubscribe = null;
+    let unsubscribeFromFirestore = null;
 
     async function getPostSnapshot() {
-      unsubscribe = firestore.collection('posts').onSnapshot((snapshot) => {
-        console.log('changed');
-        const posts = snapshot.docs.map(collectIdAndData);
-        setPosts(posts);
-      });
+      unsubscribeFromFirestore = firestore
+        .collection('posts')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+          console.log('changed');
+          const posts = snapshot.docs.map(collectIdAndData);
+          setPosts(posts);
+        });
     }
 
     getPostSnapshot();
 
     return () => {
-      unsubscribe();
+      unsubscribeFromFirestore();
     };
   }, []);
+
+  useEffect(() => {
+    let unsubscribeFromAuth = null;
+
+    unsubscribeFromAuth = auth.onAuthStateChanged((authUser) => {
+      console.log(authUser);
+      setUser(authUser);
+    });
+
+    return () => {
+      unsubscribeFromAuth();
+    };
+  });
 
   return (
     <main className='Application'>
       <h1>Think Piece</h1>
+      <Authentication user={user} />
       <Posts posts={posts} />
     </main>
   );
