@@ -1,4 +1,5 @@
 import React from 'react';
+import { firestore } from '../lib/firebase';
 import { useSetState } from '../hooks/useSetState';
 
 const initalState = {
@@ -6,9 +7,9 @@ const initalState = {
   content: '',
 };
 
-export default function AddPost({ onCreate }) {
+export default function AddPost() {
   const [state, setState] = useSetState(initalState);
-  console.log(state);
+  // console.log(state);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -20,7 +21,6 @@ export default function AddPost({ onCreate }) {
 
     const { content, title } = state;
     const post = {
-      id: Date.now().toString(),
       title,
       content,
       user: {
@@ -34,7 +34,7 @@ export default function AddPost({ onCreate }) {
       createdAt: new Date(),
     };
 
-    onCreate(post);
+    firestore.collection('posts').add(post);
 
     clear();
   };

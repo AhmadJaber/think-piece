@@ -1,34 +1,46 @@
 import React from 'react';
-
+import { firestore } from '../lib/firebase';
 import moment from 'moment';
 
-const Post = ({ title, content, user, createdAt, stars, comments }) => {
+const Post = ({ title, content, user, createdAt, stars, comments, id }) => {
+  const postRef = firestore.doc(`posts/${id}`);
+  const handleRemove = () => postRef.delete();
+  const handleStarCount = () => {
+    // update(), will take an object of fields, i want to update
+    postRef.update({ stars: stars + 1 });
+  };
+  console.log(typeof createdAt);
+
   return (
-    <article className="Post">
-      <div className="Post--content">
+    <article className='Post'>
+      <div className='Post--content'>
         <h3>{title}</h3>
         <div>{content}</div>
       </div>
-      <div className="Post--meta">
+      <div className='Post--meta'>
         <div>
           <p>
-            <span role="img" aria-label="star">
+            <span role='img' aria-label='star'>
               ⭐️
             </span>
             {stars}
           </p>
           <p>
-            <span role="img" aria-label="comments">
+            <span role='img' aria-label='comments'>
               🙊
             </span>
             {comments}
           </p>
           <p>Posted by {user.displayName}</p>
-          <p>{moment(createdAt).calendar()}</p>
+          <p>{moment(createdAt.toDate()).calendar()}</p>
         </div>
         <div>
-          <button className="star">Star</button>
-          <button className="delete">Delete</button>
+          <button className='star' onClick={handleStarCount}>
+            Star
+          </button>
+          <button className='delete' onClick={handleRemove}>
+            Delete
+          </button>
         </div>
       </div>
     </article>

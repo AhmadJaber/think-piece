@@ -111,48 +111,47 @@ A `QuerySnapshot` has the following properties:
 
 References allow you to access the database itself. This is useful for getting the collection that document is from, deleting the document, listening for changes, setting and updating properties.
 
-### Dealing With That Gnarly Error
-
-You'll notice that we have a very mean error message at the top of our console. Cloud Firestore made an API change that we need to opt into. This is a new application, so that seems fine.
-
-```js
-firestore.settings({ timestampsInSnapshots: true });
-```
-
-Now the error should be gone.
-
 ### Iteraring Through Documents
 
 So, now let's iterate through all zero of our documents.
 
 ```js
-componentDidMount = async () => {
-  const snapshot = await firestore.collection('posts').get();
+useEffect(() => {
+  async function getPostSnapshot() {
+    const snapshot = await firestore.collection('posts').get();
 
-  snapshot.forEach((doc) => {
-    const id = doc.id;
-    const data = doc.data();
+    snapshot.forEach((doc) => {
+      const id = doc.id;
+      const data = doc.data();
 
-    console.log({ id, data });
-  });
-};
+      console.log({ id, data });
+    });
+  }
+
+  getPostSnapshot();
+}, []);
 ```
 
 There won't be a lot to see here. Let's go into the Cloud Firestore console and create a document.
-
 Now, we should see it in the console.
 
 ```js
-componentDidMount = async () => {
-  const snapshot = await firestore.collection('posts').get();
+useEffect(() => {
+  async function getPostSnapshot() {
+    const snapshot = await firestore.collection('posts').get();
 
-  const posts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const posts = snapshot.docs.map((doc) => {
+      return { id: doc.id, ...doc.data() };
+    });
 
-  this.setState({ posts });
-};
+    setPosts(posts);
+  }
+
+  getPostSnapshot();
+}, []);
 ```
 
-An aside, combining the document IDs with the data is something we're going to be doing a lot. Let's make a utility method in `utilities.js`:
+An aside, combining the document IDs with the data is something we're going to be doing a lot. Let's make a utility method in `util.js`:
 
 ```js
 export const collectIdsAndData = (doc) => ({ id: doc.id, ...doc.data() });
@@ -161,26 +160,24 @@ export const collectIdsAndData = (doc) => ({ id: doc.id, ...doc.data() });
 Now, we'll refactor that code as follows in `Application.js`:
 
 ```js
-componentDidMount = async () => {
-  const snapshot = await firestore.collection('posts').get();
+useEffect(() => {
+  async function getPostSnapshot() {
+    const snapshot = await firestore.collection('posts').get();
 
-  const posts = snapshot.docs.map(collectIdsAndData);
+    const posts = snapshot.docs.map(collectIdAndData);
 
-  this.setState({ posts });
-};
-```
+    setPosts(posts);
+  }
 
-Now, we can rid of the those posts in state.
-
-```js
-state = {
-  posts: [],
-};
+  getPostSnapshot();
+}, []);
 ```
 
 ### Adding a New Post
 
 First of all, we need to get rid of that `Date.now()` based `id` in `AddPost`. It was useful for us for a second or two there, but now have Firebase generating for us on our behalf.
+
+- add new post in post collection. There are few ways to do this i can do optimistic update, but don't have the ability to do createdAt time right now, so i will put the post on database & immidietly retrive it.
 
 ```js
 handleCreate = async (post) => {
@@ -204,77 +201,24 @@ handleCreate = async (post) => {
 In `Application.js`:
 
 ```js
-import React, { Component } from 'react';
+const handleRemove = (id) => {
+  const allPosts = posts;
+  const updatedPosts = allPosts.filter((post) => post.id !== id);
 
-import Posts from './Posts';
-import { firestore } from '../firebase';
-
-class Application extends Component {
-  // …
-
-  handleRemove = async (id) => {
-    // NEW
-    const allPosts = this.state.posts;
-
-    const posts = allPosts.filter((post) => id !== post.id);
-
-    this.setState({ posts });
-  };
-
-  render() {
-    const { posts } = this.state;
-
-    return (
-      <main className='Application'>
-        <h1>Think Piece</h1>
-        <Posts
-          posts={posts}
-          onCreate={this.handleCreate}
-          onRemove={this.handleRemove} // NEW
-        />
-      </main>
-    );
-  }
-}
-
-export default Application;
-```
-
-In `Posts.js`:
-
-```js
-const Posts = ({ posts, onCreate, onRemove /* NEW */ }) => {
-  return (
-    <section className='Posts'>
-      <AddPost onCreate={onCreate} />
-      {posts.map((post) => (
-        <Post {...post} onRemove={onRemove} key={post.id} /> /* NEW */
-      ))}
-    </section>
-  );
+  setPosts(updatedPosts);
 };
-```
-
-In `Post.js`:
-
-```js
-<button className='delete' onClick={() => onRemove(id)}>
-  Delete
-</button>
 ```
 
 Now, we need to actually remove it from the Firestore.
 
 ```js
-handleRemove = async (id) => {
-  // NEW
-  const allPosts = this.state.posts;
+const handleRemove = async (id) => {
+  const allPosts = posts;
 
-  const posts = allPosts.filter((post) => id !== post.id);
+  await firestore.collection('posts').doc(`${id}`).delete();
+  const updatedPosts = allPosts.filter((post) => post.id !== id);
 
-  await firestore.doc(`posts/${id}`).delete();
-
-  this.setState({ posts });
+  setPosts(updatedPosts);
 };
 ```
 
@@ -283,67 +227,59 @@ handleRemove = async (id) => {
 Instead of managing data manually, you can also subscribe to changes in the database. Instead of a `.get()` on the collection. You'd go with `.onSnapshot()`.
 
 ```js
-import React, { Component } from 'react';
+useEffect(() => {
+  let unsubscribe = null;
 
-import Posts from './Posts';
-import { firestore } from '../firebase';
-
-class Application extends Component {
-  state = {
-    posts: [],
-  };
-
-  unsubscribe = null; // NEW
-
-  componentDidMount = async () => {
-    this.unsubscribe = firestore.collection('posts').onSnapshot((snapshot) => {
-      // NEW
-      const posts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      this.setState({ posts });
+  async function getPostSnapshot() {
+    unsubscribe = firestore.collection('posts').onSnapshot((snapshot) => {
+      console.log('changed');
+      const posts = snapshot.docs.map(collectIdAndData);
+      setPosts(posts);
     });
-  };
-
-  componentWillUnmount = () => {
-    // NEW
-    this.unsubscribe();
-  };
-
-  handleCreate = async (post) => {
-    const docRef = await firestore.collection('posts').add(post);
-    // const doc = await docRef.get();
-
-    // const newPost = {
-    //   id: doc.id,
-    //   ...doc.data(),
-    // };
-
-    // const { posts } = this.state;
-    // this.setState({ posts: [newPost, ...posts] });
-  };
-
-  handleRemove = async (id) => {
-    // const allPosts = this.state.posts;
-
-    try {
-      await firestore.collection('posts').doc(id).delete();
-      // const posts = allPosts.filter(post => id !== post.id);
-      // this.setState({ posts });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  render() {
-    // …
   }
-}
 
-export default Application;
+  getPostSnapshot();
+
+  return () => {
+    unsubscribe();
+  };
+}, []);
+
+/*
+    * i do not need to do above process because i am doing realtime update with firestore
+    so, now when create button click, i will add the post to database, then onSnapshot will
+    let me update it.
+  */
+handleCreate = async (post) => {
+  const docRef = await firestore.collection('posts').add(post);
+  // const doc = await docRef.get();
+
+  // const newPost = {
+  //   id: doc.id,
+  //   ...doc.data(),
+  // };
+
+  // const { posts } = this.state;
+  // this.setState({ posts: [newPost, ...posts] });
+};
+
+handleRemove = async (id) => {
+  // const allPosts = this.state.posts;
+
+  try {
+    await firestore.collection('posts').doc(id).delete();
+    // const posts = allPosts.filter(post => id !== post.id);
+    // this.setState({ posts });
+  } catch (error) {
+    console.error(error);
+  }
+};
 ```
 
 #### Refactoring
 
-In `Post.jsx`:
+Removing thie handler functions from `Application.js`.
+In `Post.jsx`
 
 ```js
 <button
