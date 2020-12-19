@@ -60,3 +60,67 @@ db.collection('posts').where('stars', '>=', 10);
 ```
 
 > firesotre will charge me according to how many requests i made. if i have 60million documents firebase will not change me for 60mil unless i am fetching all 60mil. so if i limit the request of documents and `paginate`, i will only pay for that limit.
+
+### security rules of firestore (what a given user allowed to do)
+
+- there is bunch of rules we can white list, by default everything is blacklisted.
+- if i enabale `read` - i will give the user ability to **get** a given a document and **list** all the document in a collection. but i can get a more granular, meaning, _user can get a list documents, but they can not scan through every one of them, only the one they know._
+- if i enable `write` - i will enabale `create`, `update` & `delete` for the user. i can also get granular here.
+
+```js
+service cloud.firesotre {
+  match /database/{database}/documents {
+    match /posts/{postId} {
+      match /comments/{comment} {
+        allow read, write: if <condition>
+      }
+    }
+  }
+}
+
+//  if i want to go to an arbitrary depth, then i can use
+match /{document=**}
+
+// another idea
+service cloud.firesotre {
+  match /database/{database}/documents {
+    // allow the user access documents in the "posts" collection only
+    // they are authenticated
+    match /posts/{postId} {
+      allow read, write; if request.auth.uid != null
+    }
+  }
+}
+
+// only modify your own data
+service cloud.firesotre {
+  match /database/{database}/documents {
+   match /users/{userId} {
+     allow read, update, delete: if request.auth.uid == userId;
+     allow create: if request.auth.uid != null;
+   }
+  }
+}
+```
+
+**validating based on the document**
+
+- `resource.data`, will have all the fields that are currently in the database.
+- `request.resource.data`, will have the incoming document.
+  > so if user modifying data then `resource.data` or `request.resource.data`, if creating one only `request.resource.data`.
+
+**accessing other documents**
+
+```js
+// will verify that document exists or not
+exists(/databases/$(database)/documents/users/$(request.auth.uid))
+
+// get data from another dodument
+get(/databases/$(database)/documents/users/${request.auth.uid})
+```
+
+**Testing notes**
+
+- security rules are all or nothing, white list or black list;
+- i can **limit my query size** so that malicious users can't run expensive queries.
+  `allow list: if request.query.limit <= 10;`

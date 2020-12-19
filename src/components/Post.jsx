@@ -2,6 +2,7 @@ import React from 'react';
 import { firestore } from '../lib/firebase';
 import moment from 'moment';
 
+// TODO: don't show this if the user not logged in or creator of the post
 const Post = ({ title, content, user, createdAt, stars, comments, id }) => {
   const postRef = firestore.doc(`posts/${id}`);
   const handleRemove = () => postRef.delete();
@@ -37,6 +38,7 @@ const Post = ({ title, content, user, createdAt, stars, comments, id }) => {
           <button className='star' onClick={handleStarCount}>
             Star
           </button>
+          {/* TODO: don't show this if the user not logged in or creator of the post */}
           <button className='delete' onClick={handleRemove}>
             Delete
           </button>

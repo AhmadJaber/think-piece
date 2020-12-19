@@ -414,28 +414,21 @@ Cool.We have a `CurrentUser`, `SignIn`, and `SignUp` components ready to rock.
 
 We're going to start with Google Sign-in because I can assume you have a Google account if you can create a Firebase application.
 
-In `Application.jsx`:
+In `Authentication.jsx`:
 
 ```js
-render() {
-  const { posts, user } = this.state;
+import CurrentUser from './CurrentUser';
+import SignInAndSignUp from './SignInAndSignUp';
 
-  return (
-    <main className="Application">
-      <h1>Think Piece</h1>
-      {user ? <CurrentUser {...user} /> : <SignIn />}
-      <Posts posts={posts} />
-    </main>
-  );
-}
+const Authentication = ({ user }) => (
+  <div>{user ? <CurrentUser {...user} /> : <SignInAndSignUp />}</div>
+);
 ```
 
 In `firebase.js`:
 
 ```js
 import 'firebase/auth';
-
-// …
 
 export const auth = firebase.auth();
 export const provider = new firebase.auth.GoogleAuthProvider();
@@ -453,26 +446,18 @@ In `SignIn.jsx`:
 In `Application.jsx`:
 
 ```js
-unsubscribeFromFirestore = null;
-unsubscribeFromAuth = null;
+useEffect(() => {
+  let unsubscribeFromAuth = null;
 
-componentDidMount = async () => {
-  this.unsubscribeFromFirestore = firestore
-    .collection('posts')
-    .onSnapshot((snapshot) => {
-      const posts = snapshot.docs.map(collectIdsAndData);
-      this.setState({ posts });
-    });
-
-  this.unsubscribeFromAuth = auth.onAuthStateChanged((user) => {
-    this.setState({ user });
+  unsubscribeFromAuth = auth.onAuthStateChanged((authUser) => {
+    console.log(authUser);
+    setUser(authUser);
   });
-};
 
-componentWillUnmount = () => {
-  this.unsubscribeFromFirestore();
-  this.unsubscribeFromAuth();
-};
+  return () => {
+    unsubscribeFromAuth();
+  };
+});
 ```
 
 ### Exercise: Implement Sign Out

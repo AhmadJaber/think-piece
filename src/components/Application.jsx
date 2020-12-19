@@ -51,7 +51,7 @@ export default function Application() {
     return () => {
       unsubscribeFromAuth();
     };
-  });
+  }, []);
 
   return (
     <main className='Application'>

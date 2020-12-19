@@ -1,5 +1,5 @@
 import React from 'react';
-import { firestore } from '../lib/firebase';
+import { auth, firestore } from '../lib/firebase';
 import { useSetState } from '../hooks/useSetState';
 
 const initalState = {
@@ -9,7 +9,9 @@ const initalState = {
 
 export default function AddPost() {
   const [state, setState] = useSetState(initalState);
+  const { uid, displayName, email, photoURL } = auth.currentUser || {};
   // console.log(state);
+  // console.log('add user', user);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -24,10 +26,10 @@ export default function AddPost() {
       title,
       content,
       user: {
-        uid: '1111',
-        displayName: 'Steve Kinney',
-        email: 'steve@mailinator.com',
-        photoURL: 'http://placekitten.com/g/200/200',
+        uid,
+        displayName,
+        email,
+        photoURL,
       },
       favorites: 0,
       comments: 0,
@@ -51,7 +53,7 @@ export default function AddPost() {
         placeholder='Title'
         value={state.title}
         onChange={handleChange}
-        required
+        // required
       />
       <input
         type='text'
