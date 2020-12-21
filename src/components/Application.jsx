@@ -1,20 +1,16 @@
-import React, { Component } from "react";
+import React from "react";
 import Authentication from "./Authentication";
 import Posts from "./Posts";
 
-class Application extends Component {
-  render() {
-    return (
-      <main className="Application">
-        <h1>Think Piece</h1>
-        <Authentication />
-        <Posts />
-      </main>
-    );
-  }
+export default function Application() {
+  return (
+    <main className="Application">
+      <h1>Think Piece</h1>
+      <Authentication />
+      <Posts />
+    </main>
+  );
 }
-
-export default Application;
 
 // using querysnapshot.forEach(), return a object of objects(docs)
 /*

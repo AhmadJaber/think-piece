@@ -1,39 +1,43 @@
-import React, { createContext, Component } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import { firestore } from "../lib/firebase";
 import { collectIdAndData } from "../utils/utils";
 
 export const PostContext = createContext();
 
-class PostsProvider extends Component {
-  state = {
-    posts: []
-  };
+export default function PostsProvider({ children }) {
+  const [posts, setPosts] = useState([]);
 
-  unsubscribeFromFirestore = null;
+  /*
+    * to enable, realtime update with cloud firestore
+    means, when the database changes firebase will tell me about it & i will update the ui
+    * i have to use onSnapshot() instead of get(). onSnapshot() will take a callback,
+    * which will run everytime the data changes.
+    so every time whatever the scope of query in this case all posts, i can limit it. so, anytime
+    that data sets changes we get a new snapshot, so that we can update the user interfece. each
+    change count as a database query, need to keep in mind.
+    * when the app mounts we subscribe to the changes of post collections, when unmounts we have to
+    unsubscribe.
+  */
+  useEffect(() => {
+    let unsubscribeFromFirestore = null;
 
-  componentDidMount = () => {
-    this.unsubscribeFromFirestore = firestore
-      .collection("posts")
-      .orderBy("createdAt", "desc")
-      .onSnapshot(snapshot => {
-        console.log("changed");
-        const posts = snapshot.docs.map(collectIdAndData);
-        this.setState({ posts });
-      });
-  };
+    async function getPostSnapshot() {
+      unsubscribeFromFirestore = firestore
+        .collection("posts")
+        .orderBy("createdAt", "desc")
+        .onSnapshot(snapshot => {
+          console.log("changed");
+          const posts = snapshot.docs.map(collectIdAndData);
+          setPosts(posts);
+        });
+    }
 
-  componentWillUnmount = () => {
-    this.unsubscribeFromFirestore();
-  };
+    getPostSnapshot();
 
-  render() {
-    const { posts } = this.state;
-    const { children } = this.props;
+    return () => {
+      unsubscribeFromFirestore();
+    };
+  }, []);
 
-    return (
-      <PostContext.Provider value={posts}>{children}</PostContext.Provider>
-    );
-  }
+  return <PostContext.Provider value={posts}>{children}</PostContext.Provider>;
 }
-
-export default PostsProvider;
