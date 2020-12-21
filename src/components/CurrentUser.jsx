@@ -4,6 +4,7 @@ import moment from 'moment';
 import { signOutGoogle } from '../lib/firebase';
 
 const CurrentUser = ({ displayName, photoURL, email, createdAt, children }) => {
+  console.log(createdAt);
   return (
     <section className='CurrentUser'>
       <div className='CurrentUser--profile'>
@@ -11,7 +12,7 @@ const CurrentUser = ({ displayName, photoURL, email, createdAt, children }) => {
         <div className='CurrentUser--information'>
           <h2>{displayName}</h2>
           <p className='email'>{email}</p>
-          <p className='created-at'>{moment(createdAt).calendar()}</p>
+          <p className='created-at'>{moment(createdAt.toDate()).calendar()}</p>
         </div>
       </div>
       <div>

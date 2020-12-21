@@ -34,17 +34,19 @@ we can **add documents** to collection useing, **collection-reference** object -
 ```js
 const db = firebase.firesotre();
 
-db.collection('posts');
-db.collection('posts').doc('kdffh4434klkjk');
-db.collection('posts').doc('kdffh4434klkjk').collection('comments');
-db.collection('posts')
-  .doc('kdffh4434klkjk')
-  .collection('comments')
-  .doc('kldfldfk53455');
+db.collection("posts");
+db.collection("posts").doc("kdffh4434klkjk");
+db.collection("posts")
+  .doc("kdffh4434klkjk")
+  .collection("comments");
+db.collection("posts")
+  .doc("kdffh4434klkjk")
+  .collection("comments")
+  .doc("kldfldfk53455");
 
 // or
-db.collection('posts/kdffh4434klkjk/comments');
-db.doc('posts/kdffh4434klkjk/comments/kldfldfk53455');
+db.collection("posts/kdffh4434klkjk/comments");
+db.doc("posts/kdffh4434klkjk/comments/kldfldfk53455");
 ```
 
 - `ordering`, `sorting` & `filtering`, firesotre has `sql` esk queries. we can get data in a particular order. because firesotre under the hood gives every property an index.
@@ -52,11 +54,11 @@ db.doc('posts/kdffh4434klkjk/comments/kldfldfk53455');
 ```js
 const db = firebase.firesotre();
 
-db.collection('posts').orderBy('createdAt', 'desc');
-db.collection('posts').limit(10);
+db.collection("posts").orderBy("createdAt", "desc");
+db.collection("posts").limit(10);
 
 // quering, no need to do that in clientside
-db.collection('posts').where('stars', '>=', 10);
+db.collection("posts").where("stars", ">=", 10);
 ```
 
 > firesotre will charge me according to how many requests i made. if i have 60million documents firebase will not change me for 60mil unless i am fetching all 60mil. so if i limit the request of documents and `paginate`, i will only pay for that limit.
@@ -124,3 +126,10 @@ get(/databases/$(database)/documents/users/${request.auth.uid})
 - security rules are all or nothing, white list or black list;
 - i can **limit my query size** so that malicious users can't run expensive queries.
   `allow list: if request.query.limit <= 10;`
+
+> in `Authentication` menu, if i go to template section, i will see the info about how i will handle `password-reset`, `email-verification`, `email address change`, `SMTP settings`;
+
+**TODOS**
+
+- enable error handling for all async tasks
+- enable minimal form validation for fields

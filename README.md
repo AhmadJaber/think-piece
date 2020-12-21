@@ -478,38 +478,6 @@ In `CurrentUser.jsx`:
 <button onClick={signOut}>Sign Out</button>
 ```
 
-### Showing the Right Component The First TIme
-
-```js
-state = {
-  posts: [],
-  user: null,
-  userLoaded: false,
-};
-```
-
-```js
-this.unsubscribeFromAuth = auth.onAuthStateChanged((user) => {
-  this.setState({ user, userLoaded: true });
-});
-```
-
-```js
-render() {
-  const { posts, user, userLoaded } = this.state;
-
-  const userInformation = user ? <CurrentUser {...user} /> : <SignIn />
-
-  return (
-    <main className="Application">
-      <h1>Think Piece</h1>
-      { userLoaded && userInformation }
-      <Posts posts={posts} onCreate={this.handleCreate} onRemove={this.handleRemove} />
-    </main>
-  );
-}
-```
-
 ## Security Rules
 
 Up until now, everything has been wide open. That's not great. If we're going to push stuff out to production, we're going to need to start adding some security to our application.
@@ -696,6 +664,38 @@ service cloud.firestore {
       allow update, delete: if request.auth.uid == resource.data.user.uid;
     }
   }
+}
+```
+
+### Showing the Right Component The First TIme
+
+```js
+state = {
+  posts: [],
+  user: null,
+  userLoaded: false,
+};
+```
+
+```js
+this.unsubscribeFromAuth = auth.onAuthStateChanged((user) => {
+  this.setState({ user, userLoaded: true });
+});
+```
+
+```js
+render() {
+  const { posts, user, userLoaded } = this.state;
+
+  const userInformation = user ? <CurrentUser {...user} /> : <SignIn />
+
+  return (
+    <main className="Application">
+      <h1>Think Piece</h1>
+      { userLoaded && userInformation }
+      <Posts posts={posts} onCreate={this.handleCreate} onRemove={this.handleRemove} />
+    </main>
+  );
 }
 ```
 

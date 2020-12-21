@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { auth, firestore } from '../lib/firebase';
+import { auth, createUserProfileDocument, firestore } from '../lib/firebase';
 import { collectIdAndData } from '../utils/utils';
 import Authentication from './Authentication';
 import Posts from './Posts';
@@ -43,9 +43,10 @@ export default function Application() {
   useEffect(() => {
     let unsubscribeFromAuth = null;
 
-    unsubscribeFromAuth = auth.onAuthStateChanged((authUser) => {
-      console.log(authUser);
-      setUser(authUser);
+    unsubscribeFromAuth = auth.onAuthStateChanged(async (authUser) => {
+      const user = await createUserProfileDocument(authUser);
+      console.log('currentuser', user);
+      setUser(user);
     });
 
     return () => {

@@ -45,6 +45,7 @@ export default function AddPost() {
     setState(initalState);
   };
 
+  // ? title field has required muted, to test the firestore security rules
   return (
     <form onSubmit={handleSubmit} className='AddPost'>
       <input
