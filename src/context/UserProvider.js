@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect } from "react";
-import { auth, createUserProfileDocument } from "../lib/firebase";
+import React, { createContext, useState, useEffect } from 'react';
+import { auth, createUserProfileDocument } from '../lib/firebase';
 
 export const UserContext = createContext();
 
@@ -9,13 +9,21 @@ export default function UserProvider({ children }) {
   useEffect(() => {
     let unsubscribeFromAuth = null;
 
-    unsubscribeFromAuth = auth.onAuthStateChanged(async authUser => {
-      const user = await createUserProfileDocument(authUser);
-      console.log("currentuser", user);
-      setUser(user);
+    unsubscribeFromAuth = auth.onAuthStateChanged(async (authUser) => {
+      console.log('user', authUser);
+      if (authUser) {
+        const userRef = await createUserProfileDocument(authUser);
+        userRef.onSnapshot((snapshot) => {
+          console.log('changed');
+          setUser({ uid: snapshot.id, ...snapshot.data() });
+        });
+      } else {
+        setUser(authUser);
+      }
     });
 
     return () => {
+      console.log('unmounting');
       unsubscribeFromAuth();
     };
   }, [setUser]);

@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import "./index.scss";
 import Application from "./components/Application";
 import reportWebVitals from "./reportWebVitals";
@@ -8,11 +9,13 @@ import UserProvider from "./context/UserProvider";
 
 ReactDOM.render(
   <React.StrictMode>
-    <UserProvider>
-      <PostsProvider>
-        <Application />
-      </PostsProvider>
-    </UserProvider>
+    <Router>
+      <UserProvider>
+        <PostsProvider>
+          <Application />
+        </PostsProvider>
+      </UserProvider>
+    </Router>
   </React.StrictMode>,
   document.getElementById("root")
 );

@@ -1,13 +1,22 @@
 import React from "react";
+import { Link, Route, Switch } from "react-router-dom";
 import Authentication from "./Authentication";
 import Posts from "./Posts";
+import UserProfile from "./UserProfile";
 
 export default function Application() {
   return (
     <main className="Application">
-      <h1>Think Piece</h1>
+      <Link to="/">
+        <h1>Think Piece</h1>
+      </Link>
+
       <Authentication />
-      <Posts />
+
+      <Switch>
+        <Route exact path="/" component={Posts} />
+        <Route exact path="/profile" component={UserProfile} />
+      </Switch>
     </main>
   );
 }
