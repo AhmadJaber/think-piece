@@ -1,5 +1,5 @@
 import React from 'react';
-import { auth, firestore } from '../lib/firebase';
+import { firestore } from '../lib/firebase';
 import { useSetState } from '../hooks/useSetState';
 
 const initalState = {
@@ -7,9 +7,9 @@ const initalState = {
   content: '',
 };
 
-export default function AddPost() {
+export default function AddPost({ user }) {
   const [state, setState] = useSetState(initalState);
-  const { uid, displayName, email, photoURL } = auth.currentUser || {};
+  const { uid, displayName, email, photoURL } = user || {};
   // console.log(state);
   // console.log('add user', user);
 

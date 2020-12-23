@@ -48,18 +48,22 @@ export default function UserProfile() {
   };
 
   return (
-    <section className='userProfile'>
-      <form onSubmit={handleSubmit}>
-        <input
-          type='text'
-          name='displayName'
-          onChange={handleChange}
-          placeholder='your display name'
-          value={displayName}
-        />
-        <input type='file' ref={imageRef} />
-        <input type='submit' className='update' />
-      </form>
-    </section>
+    <>
+      {auth.currentUser ? (
+        <section className='userProfile'>
+          <form onSubmit={handleSubmit}>
+            <input
+              type='text'
+              name='displayName'
+              onChange={handleChange}
+              placeholder='your display name'
+              value={displayName}
+            />
+            <input type='file' ref={imageRef} />
+            <input type='submit' className='update' />
+          </form>
+        </section>
+      ) : null}
+    </>
   );
 }

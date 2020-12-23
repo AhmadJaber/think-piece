@@ -819,39 +819,38 @@ What if we used React's Context API?
 ### PostsProvider
 
 ```js
-import React, { Component, createContext } from 'react';
-import { firestore } from '../firebase';
-import { collectIdsAndData } from '../utilities';
+import React, { createContext, useEffect, useState } from 'react';
+import { firestore } from '../lib/firebase';
+import { collectIdAndData } from '../utils/utils';
 
-export const PostsContext = createContext();
+export const PostContext = createContext();
 
-class PostsProvider extends Component {
-  state = { posts: [] };
+export default function PostsProvider({ children }) {
+  const [posts, setPosts] = useState([]);
 
-  unsubscribe = null;
+  useEffect(() => {
+    let unsubscribeFromFirestore = null;
 
-  componentDidMount = () => {
-    this.unsubscribe = firestore.collection('posts').onSnapshot((snapshot) => {
-      const posts = snapshot.docs.map(collectIdsAndData);
-      this.setState({ posts });
-    });
-  };
+    async function getPostSnapshot() {
+      unsubscribeFromFirestore = firestore
+        .collection('posts')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+          console.log('changed');
+          const posts = snapshot.docs.map(collectIdAndData);
+          setPosts(posts);
+        });
+    }
 
-  componentWillUnmount = () => {
-    this.unsubscribe();
-  };
+    getPostSnapshot();
 
-  render() {
-    const { posts } = this.state;
-    const { children } = this.props;
+    return () => {
+      unsubscribeFromFirestore();
+    };
+  }, []);
 
-    return (
-      <PostsContext.Provider value={posts}>{children}</PostsContext.Provider>
-    );
-  }
+  return <PostContext.Provider value={posts}>{children}</PostContext.Provider>;
 }
-
-export default PostsProvider;
 ```
 
 ### Hooking Up the Posts Provider
@@ -922,37 +921,38 @@ export default Posts;
 In `UserProvider.jsx`:
 
 ```js
-import React, { Component, createContext } from 'react';
-import { auth, createUserDocument } from '../firebase';
+import React, { createContext, useState, useEffect } from 'react';
+import { auth, createUserProfileDocument } from '../lib/firebase';
 
-export const UserContext = createContext({ user: null });
+export const UserContext = createContext();
 
-class UserProvider extends Component {
-  state = { user: null };
+export default function UserProvider({ children }) {
+  const [user, setUser] = useState(null);
+  console.log('user', user);
 
-  componentDidMount = async () => {
-    this.unsubscribeFromAuth = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const userDocument = await createUserDocument(user);
-        return this.setState({ user: userDocument.data() });
+  useEffect(() => {
+    let unsubscribeFromAuth = null;
+
+    unsubscribeFromAuth = auth.onAuthStateChanged(async (authUser) => {
+      if (authUser) {
+        const userRef = await createUserProfileDocument(authUser);
+        userRef.onSnapshot((snapshot) => {
+          console.log('changed');
+          setUser({ uid: snapshot.id, ...snapshot.data() });
+        });
+      } else {
+        setUser(authUser);
       }
-      this.setState({ user: null });
     });
-  };
 
-  componentWillUnmount = () => {
-    this.unsubscribeFromAuth();
-  };
+    return () => {
+      console.log('unmounting');
+      unsubscribeFromAuth();
+    };
+  }, [setUser]);
 
-  render() {
-    const { children } = this.props;
-    const { user } = this.state;
-
-    return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
-  }
+  return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 }
-
-export default UserProvider;
 ```
 
 In `index.jsx`:
@@ -977,21 +977,23 @@ render(
 );
 ```
 
-In `UserDashboard.jsx`:
+In `Authentication.jsx`:
 
 ```js
 import React, { useContext } from 'react';
-import { UserContext } from '../contexts/UserProvider';
-import SignIn from './SignIn';
 import CurrentUser from './CurrentUser';
+import SignInAndSignUp from './SignInAndSignUp';
+import { UserContext } from '../context/UserProvider';
 
-const UserDashboard = () => {
+const Authentication = ({ loading }) => {
   const user = useContext(UserContext);
 
-  return <div>{user ? <CurrentUser {...user} /> : <SignIn />}</div>;
+  if (loading) return null;
+
+  return <div>{user ? <CurrentUser {...user} /> : <SignInAndSignUp />}</div>;
 };
 
-export default UserDashboard;
+export default Authentication;
 ```
 
 ## Cleaning Up the User Interface
