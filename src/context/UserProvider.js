@@ -5,12 +5,12 @@ export const UserContext = createContext();
 
 export default function UserProvider({ children }) {
   const [user, setUser] = useState(null);
+  console.log('user', user);
 
   useEffect(() => {
     let unsubscribeFromAuth = null;
 
     unsubscribeFromAuth = auth.onAuthStateChanged(async (authUser) => {
-      console.log('user', authUser);
       if (authUser) {
         const userRef = await createUserProfileDocument(authUser);
         userRef.onSnapshot((snapshot) => {
