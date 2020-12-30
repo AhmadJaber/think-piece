@@ -22,10 +22,7 @@ export default function UserProvider({ children }) {
       }
     });
 
-    return () => {
-      console.log('unmounting');
-      unsubscribeFromAuth();
-    };
+    return () => unsubscribeFromAuth();
   }, [setUser]);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;

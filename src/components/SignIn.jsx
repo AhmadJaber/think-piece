@@ -1,25 +1,32 @@
 import React from 'react';
 import { useSetState } from '../hooks/useSetState';
-import { signInWithGoogle } from '../lib/firebase';
+import { auth, signInWithGoogle } from '../lib/firebase';
 
-const initalState = {
+const initialState = {
   email: '',
   password: '',
 };
 
 //TODO: enable sign in with google
 export default function SignIn() {
-  const [state, setState] = useSetState(initalState);
+  const [state, setState] = useSetState(initialState);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setState({ [name]: value });
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    const { email, password } = state;
 
-    setState(initalState);
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (error) {
+      console.error(error.message);
+    }
+
+    setState(initialState);
   };
 
   return (

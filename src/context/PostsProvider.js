@@ -1,6 +1,6 @@
-import React, { createContext, useEffect, useState } from "react";
-import { firestore } from "../lib/firebase";
-import { collectIdAndData } from "../utils/utils";
+import React, { createContext, useEffect, useState } from 'react';
+import { firestore } from '../lib/firebase';
+import { collectIdAndData } from '../utils/utils';
 
 export const PostContext = createContext();
 
@@ -21,23 +21,64 @@ export default function PostsProvider({ children }) {
   useEffect(() => {
     let unsubscribeFromFirestore = null;
 
-    async function getPostSnapshot() {
+    async function getPostsSnapshot() {
       unsubscribeFromFirestore = firestore
-        .collection("posts")
-        .orderBy("createdAt", "desc")
-        .onSnapshot(snapshot => {
-          console.log("changed");
+        .collection('posts')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+          console.log('changed');
           const posts = snapshot.docs.map(collectIdAndData);
           setPosts(posts);
         });
     }
 
-    getPostSnapshot();
+    getPostsSnapshot();
 
-    return () => {
-      unsubscribeFromFirestore();
-    };
+    return () => unsubscribeFromFirestore();
   }, []);
 
   return <PostContext.Provider value={posts}>{children}</PostContext.Provider>;
 }
+
+// using querysnapshot.forEach(), return a object of objects(docs)
+/*
+  useEffect(() => {
+    async function getPostSnapshot() {
+      const snapshot = await firestore.collection('posts').get();
+      const fullObj = {};
+
+      console.log(snapshot);
+      snapshot.forEach((doc) => {
+        const id = doc.id;
+        const data = doc.data();
+
+        fullObj[id] = { id, data };
+      });
+      console.log(fullObj);
+    }
+
+    getPostSnapshot();
+  }, []);
+*/
+
+// using querysnapshot.forEach(), return a object of objects(docs)
+/*
+  const posts = snapshot.docs.reduce((accm, doc) => {
+    return { ...accm, [doc.id]: { id: doc.id, data: doc.data() } };
+  }, {});
+*/
+
+/**
+  const posts = snapshot.docs.reduce((accm, doc) => {
+    return Object.assign(accm, {
+      [doc.id]: { id: doc.id, data: doc.data() },
+    });
+  }, {});
+*/
+
+/**
+  const posts = snapshot.docs.reduce((accm, doc) => {
+    accm[doc.id] = { id: doc.id, data: doc.data() };
+    return accm;
+  }, {});
+*/

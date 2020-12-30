@@ -163,7 +163,6 @@ Now, we'll refactor that code as follows in `Application.js`:
 useEffect(() => {
   async function getPostSnapshot() {
     const snapshot = await firestore.collection('posts').get();
-
     const posts = snapshot.docs.map(collectIdAndData);
 
     setPosts(posts);
@@ -246,10 +245,10 @@ useEffect(() => {
 }, []);
 
 /*
-    * i do not need to do above process because i am doing realtime update with firestore
-    so, now when create button click, i will add the post to database, then onSnapshot will
-    let me update it.
-  */
+  * i do not need to do above process because i am doing realtime update with firestore
+  so, now when create button click, i will add the post to database, then onSnapshot will
+  let me update it.
+*/
 handleCreate = async (post) => {
   const docRef = await firestore.collection('posts').add(post);
   // const doc = await docRef.get();
@@ -535,7 +534,7 @@ You can nest rules to sub-collections:
 service cloud.firestore {
   match /databases/{database}/documents {
     match /posts/{postId} {
-      match /comments/{comment} {
+      match /comments/{commentId} {
         allow read, write: if <condition>;
       }
     }
@@ -1101,58 +1100,47 @@ In `CurrentUser.jsx`:
 Okay, let's draw the owl with the `UserProfile` page.
 
 ```js
-import React, { Component } from 'react';
-import { auth, firestore } from '../firebase';
+import React, { useState, useRef } from 'react';
+import { auth, firestore, storage } from '../lib/firebase';
 
-class UserProfile extends Component {
-  state = { displayName: '' };
-  imageInput = null;
+export default function UserProfile() {
+  const [displayName, setDisplayName] = useState('');
 
-  get uid() {
-    return auth.currentUser.uid;
-  }
-
-  get userRef() {
-    return firestore.collection('users').doc(this.uid);
-  }
-
-  handleChange = (event) => {
-    const { name, value } = event.target;
-    this.setState({ [name]: value });
+  const handleChange = (event) => {
+    setDisplayName(event.target.value);
   };
 
-  handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
-    const { displayName } = this.state;
+    const uid = auth.currentUser ? auth.currentUser.uid : null;
+    const userDocumentRef = firestore.doc(`users/${uid}`);
 
     if (displayName) {
-      this.userRef.update(this.state);
+      userDocumentRef.update({ displayName });
+      setDisplayName('');
     }
   };
 
-  render() {
-    const { displayName } = this.state;
-
-    return (
-      <section className='UserProfile'>
-        <form onSubmit={this.handleSubmit} className='UpdateUser'>
-          <input
-            type='text'
-            name='displayName'
-            value={displayName}
-            placeholder='Display Name'
-            onChange={this.handleChange}
-          />
-          <input type='file' ref={(ref) => (this.imageInput = ref)} />
-          <input className='update' type='submit' />
-        </form>
-      </section>
-    );
-  }
+  return (
+    <>
+      {auth.currentUser ? (
+        <section className='userProfile'>
+          <form onSubmit={handleSubmit}>
+            <input
+              type='text'
+              name='displayName'
+              onChange={handleChange}
+              placeholder='your display name'
+              value={displayName}
+            />
+            <input type='file' ref={imageRef} />
+            <input type='submit' className='update' />
+          </form>
+        </section>
+      ) : null}
+    </>
+  );
 }
-
-export default UserProfile;
 ```
 
 ## Storage
@@ -1178,24 +1166,41 @@ export const storage = firebase.storage();
 Back in `UserProfile.jsx`:
 
 ```js
-imageInput = null;
+const imageRef = useRef(null);
 
-get file() {
-  return this.imageInput && this.imageInput.files[0];
-}
+useEffect(() => {
+  const imgFile = imageRef.current && imageRef.current.files[0];
+});
 ```
 
 ```js
-if (this.file) {
-  storage
-    .ref()
-    .child('user-profiles')
-    .child(this.uid)
-    .child(this.file.name)
-    .put(this.file)
-    .then((response) => response.ref.getDownloadURL())
-    .then((photoURL) => this.userRef.update({ photoURL }));
-}
+useEffect(() => {
+  if (imgFile) {
+    /*
+      storage.ref() top of the storage-bucket
+      we will have a folder for each user, based on there with id.
+      storage has security rules, so we can use the rules to set that
+      a user can only access the folder which created based on the user id.
+
+      * so we uploaded a image and saved in the firebase storage-bucket &
+      * repalce the photoURL field in firestore user-document
+      */
+    storage
+      .ref()
+      .child('user-profiles')
+      .child(uid)
+      .child(imgFile.name)
+      .put(imgFile)
+      .then((response) => {
+        console.log(response);
+        return response.ref.getDownloadURL();
+      })
+      .then((photoURL) => userDocumentRef.update({ photoURL }))
+      .catch((error) => console.error(error.message));
+
+    imageRef.current.value = '';
+  }
+});
 ```
 
 ### Setting Security Rules on the Bucket
@@ -1217,78 +1222,52 @@ service firebase.storage {
 Let's create a page for a single post where people can leave comments.
 
 ```js
-import React, { Component } from 'react';
-
-import { withRouter, Link, Redirect } from 'react-router-dom';
-import Post from './Post';
+import React, { useContext, useEffect, useState } from 'react';
+import { useRouteMatch } from 'react-router-dom';
+import { UserContext } from '../context/UserProvider';
+import { firestore } from '../lib/firebase';
+import { collectIdAndData } from '../utils/utils';
 import Comments from './Comments';
-import { firestore } from '../firebase';
-import { collectIdsAndData } from '../utilities';
+import Post from './Post';
 
-class PostPage extends Component {
-  state = { post: null, comments: [], loaded: false };
+export default function PostPage() {
+  const user = useContext(UserContext);
+  const { params } = useRouteMatch();
+  const [post, setPost] = useState(null);
+  const [comments, setComments] = useState([]);
+  const postRef = firestore.doc(`posts/${params.id}`);
+  const commentsRef = postRef.collection(`/comments`);
+  console.log('comments', comments);
 
-  get postId() {
-    return this.props.match.params.id;
-  }
-
-  get postRef() {
-    return firestore.doc(`/posts/${this.postId}`);
-  }
-
-  get commentsRef() {
-    return this.postRef.collection('comments');
-  }
-
-  unsubscribeFromPost = [];
-  unsubscribeFromComments = [];
-
-  componentDidMount = async () => {
-    this.unsubscribeFromPost = this.postRef.onSnapshot((snapshot) => {
-      const post = collectIdsAndData(snapshot);
-      this.setState({ post, loaded: true });
+  useEffect(() => {
+    const unsubscribeFromPost = postRef.onSnapshot((snapshot) => {
+      const post = collectIdAndData(snapshot);
+      setPost(post);
     });
 
-    this.unsubscribeFromComments = this.commentsRef.onSnapshot((snapshot) => {
-      const comments = snapshot.docs.map(collectIdsAndData);
-      this.setState({ comments });
+    const unsubscribeFromComments = commentsRef.onSnapshot((snapshot) => {
+      const comments = snapshot.docs.map(collectIdAndData);
+      setComments(comments);
     });
+
+    return () => {
+      unsubscribeFromPost();
+      unsubscribeFromComments();
+    };
+  }, []);
+
+  const createComment = (comment) => {
+    const createdAt = new Date();
+    commentsRef.add({ ...comment, user, createdAt });
   };
 
-  componentWillUnmount = () => {
-    this.unsubscribeFromPost();
-    this.unsubscribeFromComments();
-  };
-
-  createComment = (comment, user) => {
-    this.commentsRef.add({
-      ...comment,
-      user,
-    });
-  };
-
-  render() {
-    const { post, comments, loaded } = this.state;
-
-    if (!loaded) return <p>Loading…</p>;
-
-    return (
-      <section>
-        {post && <Post {...post} />}
-        <Comments
-          comments={comments}
-          postId={post.id}
-          onCreate={this.createComment}
-        />
-        <footer>
-          <Link to='/'>&larr; Back</Link>
-        </footer>
-      </section>
-    );
-  }
+  return (
+    <section>
+      {post ? <Post {...post} /> : null}
+      <Comments comments={comments} onCreate={createComment} />
+    </section>
+  );
 }
-
-export default withRouter(PostPage);
 ```
 
 ### Using the Higher Order Component Patter
