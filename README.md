@@ -1322,52 +1322,35 @@ handleSubmit = (event) => {
 
 Make sure you have the latest version of the Firebase CLI tools.
 
-```
-firebase install -g firebase-tools
-```
+- [docs on firebase cli](https://firebase.google.com/docs/cli/#linux)
+- [docs on firebase admin](https://firebase.google.com/docs/admin/setup)
 
-(This will also do the trick if you don't have them at all.)
-
-You'll also need to be logged in.
+if i want to use different gmail account, first `logout` then `login`
 
 ```
+firebase logout
 firebase login
 ```
-
-You'll need to initialize your project.
-
-```
-firebase init
-```
-
-We'll pick the services we want to use and go with the defaults.
 
 **Note**: Notice how it pulled down our security rules for Firestore and Storage. This means we can actually edit this stuff locally, which is pretty cool.
 
 **Note**: You want to make sure that you're "public" directory is `build` and not `public`.
 
-There is one setting where we do _not_ want the default option:
-
-> ? Configure as a single-page app (rewrite all urls to /index.html)? _Yes_
-
 We'll modify our npm scripts to run our `build` script followed by `firebase deploy`.
-
 In `package.json`:
 
 ```
 "deploy": "npm run build && firebase deploy"
+"deploy": "yarn build && firebase deploy"
 ```
 
 Cool! Now it should be online.
-
 If you messed up any of the settings, then you should be able to play with them in `firebase.json`.
 
 ### Production Logs and Rolling Back
 
 If we head over to our project console, we can see each deploy that we've done.
-
 The cool thing to notice here that that you can rollback to previous deploys if necessary.
-
 Other than that, there is not a lot to see here.
 
 ## Functions
