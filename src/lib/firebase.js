@@ -86,3 +86,6 @@ export const getUserDocument = async uid => {
 */
 
 export default firebase;
+
+// test locally before upload
+// https://think-piece-2e3c0--think-piece-alyutkj4.web.app
